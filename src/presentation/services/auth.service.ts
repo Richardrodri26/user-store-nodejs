@@ -1,5 +1,6 @@
+import { bcryptAdapter } from '../../config';
 import { UserModel } from '../../data';
-import { CustomError } from '../../domain';
+import { CustomError, UserEntity } from '../../domain';
 import { RegisterUserDto } from '../../domain/dtos/auth/register-user.dto';
 
 
@@ -13,7 +14,32 @@ export class AuthService {
 
     if (existUser) throw CustomError.badRequest('Email already exists');
     
-    return 'Todo ok'
+    try {
+      
+      const user = new UserModel(registerUserDto);
+
+      
+      // Encriptar la contrasena
+      user.password = await bcryptAdapter.hash(registerUserDto.password);
+
+      await user.save();
+      // JWT <--- para mantener la autenticacion del usuario
+
+      // Email de confirmacion
+
+      const { password, ...userEntity } = UserEntity.fromObject(user);
+
+      // const {  }
+
+      return {
+        user: userEntity,
+        token: 'token',
+      };
+
+    } catch (error) {
+      throw CustomError.internalServer(`${error}`);
+    }
+
 
   } 
 

@@ -2,9 +2,12 @@ import { bcryptAdapter, JwtAdapter } from "../../config";
 import { UserModel } from "../../data";
 import { CustomError, LoginUserDto, UserEntity } from "../../domain";
 import { RegisterUserDto } from "../../domain/dtos/auth/register-user.dto";
+import { EmailService } from "./email.service";
 
 export class AuthService {
-  constructor() {}
+  constructor(
+    private readonly emailService: EmailService
+  ) {}
 
   public async registerUser(registerUserDto: RegisterUserDto) {
     const existUser = await UserModel.findOne({ email: registerUserDto.email });
@@ -21,6 +24,7 @@ export class AuthService {
       // JWT <--- para mantener la autenticacion del usuario
 
       // Email de confirmacion
+      await this.sendEmailValidationLink(user.email);
 
       const { password, ...userEntity } = UserEntity.fromObject(user);
 
@@ -66,4 +70,11 @@ export class AuthService {
       token,
     };
   }
+
+  private sendEmailValidationLink = async ( email: string ) => {
+
+    
+
+  }
+
 }

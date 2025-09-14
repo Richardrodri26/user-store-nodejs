@@ -1,5 +1,5 @@
 import { CategoryModel } from "../../data";
-import { CreateCategoryDto, CustomError, UserEntity, CategoryEntity } from "../../domain";
+import { CreateCategoryDto, CustomError, UserEntity, CategoryEntity, PaginationDto } from "../../domain";
 
 
 export class CategoryService {
@@ -34,13 +34,21 @@ export class CategoryService {
 
   }
 
-  async getCategories() {
+  async getCategories(paginationDto: PaginationDto) {
     
-    try {
-      // use .lean() to return plain JS objects and avoid very large union types from Mongoose
-      const categories = await CategoryModel.find().lean();
+    const { page, limit } = paginationDto;
 
-      return (categories as any[]).map(catObj => {
+    try {
+
+      // perform queries separately with explicit types to avoid complex union types
+      const total: number = await CategoryModel.countDocuments().exec();
+      const categoriesRaw = await CategoryModel.find()
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean()
+        .exec();
+
+      const categoriesToSend = (categoriesRaw as any[]).map(catObj => {
         const category = CategoryEntity.fromObject(catObj);
         return {
           id: category.id,
@@ -49,6 +57,15 @@ export class CategoryService {
           user: category.user,
         };
       });
+
+      return {
+        categories: categoriesToSend,
+        page,
+        limit,
+        total,
+        next:  `/api/categories?page=${page + 1}&limit=${limit}`,
+        previous: page - 1 > 0 ? `/api/categories?page=${page - 1}&limit=${limit}`: null,
+      }
     } catch (error) {
       throw CustomError.internalServer(`${error}`)
     }

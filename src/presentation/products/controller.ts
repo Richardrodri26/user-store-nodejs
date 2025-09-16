@@ -1,13 +1,13 @@
 
 
 import { Request, Response } from "express";
-import { CreateCategoryDto, CustomError, PaginationDto } from "../../domain";
-import { CategoryService } from "../services/category.service";
+import { CreateProductDto, CustomError, PaginationDto } from "../../domain";
+import { ProductService } from "../services/product.service";
 
 export class ProductController {
 
   constructor(
-    //TODO: private readonly productService: ProductService
+    private readonly productService: ProductService
   ) {}
 
   private handleError(error: Error, res: Response) {
@@ -20,17 +20,13 @@ export class ProductController {
   };
 
   createProduct = (req: Request, res: Response) => {
-    const [error, createCategoryDto] = CreateCategoryDto.create(req.body)
+    const [error, createProductDto] = CreateProductDto.create(req.body)
 
-    if (error) {
-      return res.status(400).json({ error })
-    }
+    if (error) return res.status(400).json({ error })
 
-    // this.categoryService.createCategory(createCategoryDto!, req.body.user)
-    //   .then(category => res.status(201).json(category))
-    //   .catch(error => this.handleError(error, res))
-
-    return res.status(201).json({ message: "createProduct works", body: req.body });
+    this.productService.createProduct(createProductDto!)
+      .then(product => res.status(201).json(product))
+      .catch(error => this.handleError(error, res))
 
   }
   getProducts = async (req: Request, res: Response) => {
@@ -40,11 +36,10 @@ export class ProductController {
     const [error, paginationDto] = PaginationDto.create(+page, +limit);
     if (error) return res.status(400).json({ error })
 
-      return res.json({ message: "getProducts works", page, limit });
 
-    // this.categoryService.getCategories(paginationDto!)
-    //   .then(categories => res.status(200).json(categories))
-    //   .catch(error => this.handleError(error, res));
+    this.productService.getProducts(paginationDto!)
+      .then(products => res.status(200).json(products))
+      .catch(error => this.handleError(error, res));
 
   }
 
